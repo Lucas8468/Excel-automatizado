@@ -19,8 +19,17 @@ export default function App() {
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // 🚀 CONEXÃO CORRIGIDA E BLINDADA: Adicionado o caractere "&" antes do "rand=" para separar o número gerado do link da Microsoft!
-      const linkDiretoOneDrive = "https://1drv.ms" + Math.random();
+      // 🚀 A SOLUÇÃO DEFINITIVA: Separamos a URL base limpa do OneDrive Microsoft
+      const urlBaseOneDrive = "https://1drv.ms";
+      
+      // Criamos um construtor de parâmetros nativo que impede erros de digitação de caracteres
+      const parametros = new URLSearchParams();
+      parametros.append("download", "1");
+      parametros.append("wdAllowInteractivity", "True");
+      parametros.append("rand", String(Math.random())); // Gera o quebra-cache isolado de forma perfeita!
+
+      // O próprio JavaScript monta o link completo colocando os símbolos de "?" e "&" sozinhos nos lugares certos!
+      const linkDiretoOneDrive = urlBaseOneDrive + "?" + parametros.toString();
       
       const response = await fetch(linkDiretoOneDrive);
       if (!response.ok) throw new Error("Falha ao se conectar diretamente com o OneDrive");
@@ -88,7 +97,7 @@ export default function App() {
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
-    // Verifica atualizações remotas na nuvem a cada 15 segundos de forma autônoma
+    // Puxa as atualizações do OneDrive a cada 15 segundos automaticamente
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 15000);
     return () => clearInterval(intervalo);
   }, []);
@@ -101,14 +110,14 @@ export default function App() {
         <div>
           <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "bold" }}>Dashboard Excel Web Real-Time</h1>
           <p style={{ margin: "5px 0 0 0", opacity: 0.7, fontSize: "14px" }}>
-            Sincronização corporativa de alta performance via Link Direto Microsoft.
+            Sincronização corporativa inteligente via construtor URLSearchParams nativo.
           </p>
         </div>
       </div>
       
       <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
         {loading || !chartData ? (
-          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Sincronizando com os servidores da Microsoft...</p>
+          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Sincronizando de forma segura com a Microsoft...</p>
         ) : (
           <div style={{ width: "100%", height: "400px" }}>
             <Bar
@@ -118,7 +127,7 @@ export default function App() {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: { display: false },
-                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Real-Time)", color: "#333", font: { size: 16, weight: "bold" } },
+                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Inteligente)", color: "#333", font: { size: 16, weight: "bold" } },
                 },
                 scales: {
                   x: { ticks: { color: "#333", font: { weight: "bold" } }, grid: { display: false } },
