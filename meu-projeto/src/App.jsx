@@ -11,28 +11,26 @@ import {
   Legend,
 } from "chart.js";
 
-// Registra os componentes necessários do Chart.js para evitar quebras visuais
+// Registra os componentes necessários do Chart.js
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function App() {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // URL pública de extração de dados do seu Financial Sample no OneDrive
+  // Link de download direto e público do seu Financial Sample no OneDrive
   const EXCEL_ONEDRIVE_URL = "https://live.com";
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // O parâmetro '&t=' adiciona a hora atual para forçar o navegador a buscar o arquivo novo, ignorando o cache
+      // O caractere extra adicionado deve ser '&' e não '?' para não quebrar a URL base
       const response = await fetch(`${EXCEL_ONEDRIVE_URL}&t=${new Date().getTime()}`);
       
-      if (!response.ok) {
-        throw new Error("Não foi possível acessar o arquivo do OneDrive");
-      }
-
+      if (!response.ok) throw new Error("Erro ao baixar o arquivo do OneDrive");
+      
       const arrayBuffer = await response.arrayBuffer();
       
-      // Lê o arquivo binário do Excel diretamente no navegador (Front-end puro)
+      // Lê o arquivo do Excel diretamente no navegador do usuário
       const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
       const planilha = workbook.Sheets["Sheet1"]; // Abre a aba Sheet1
       
@@ -42,14 +40,14 @@ export default function App() {
       if (dadosMatriz.length > 1) {
         const agrupado = {};
         
-        // No modelo Financial Sample: a coluna de índice 2 é 'Product' e a de índice 4 é 'Sales'
+        // Mapeia as colunas do Financial Sample (Índice 1 = Categoria/Produto, Índice 4 = Vendas)
         for (let i = 1; i < dadosMatriz.length; i++) {
           const linha = dadosMatriz[i];
           if (!linha || linha.length === 0) continue;
 
-          // Mapeamento dinâmico baseado na ordem padrão das colunas do seu Excel
-          const produto = String(linha[2] || "").trim();
-          const valorBruto = String(linha[4] || "");
+          // Se a sua planilha tiver o produto na coluna B use linha[1], se for na coluna C use linha[2]
+          const produto = String(linha[1] || linha[2] || "").trim();
+          const valorBruto = String(linha[4] || linha[5] || "");
           
           // Limpa caracteres especiais de moedas (como $) para não quebrar a soma matemática
           const valorLimpo = valorBruto.replace(/[^\d.-]/g, ""); 
@@ -60,7 +58,7 @@ export default function App() {
           }
         }
 
-        // Configura a estrutura de exibição oficial do Chart.js
+        // Atualiza a estrutura oficial de dados do Chart.js
         setChartData({
           labels: Object.keys(agrupado),
           datasets: [
@@ -76,14 +74,14 @@ export default function App() {
       }
       setLoading(false);
     } catch (error) {
-      console.error("Erro ao ler dados do OneDrive diretamente no front-end:", error);
+      console.error("Erro ao processar planilha no front-end:", error);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
-    // Polling Remoto: Verifica e puxa atualizações do OneDrive a cada 30 segundos automaticamente
+    // Polling Remoto: Puxa atualizações do OneDrive a cada 30 segundos automaticamente
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 30000);
     return () => clearInterval(intervalo);
   }, []);
@@ -105,7 +103,7 @@ export default function App() {
       {/* Container do Gráfico de Barras */}
       <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
         {loading || !chartData ? (
-          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Conectando com segurança ao OneDrive e processando a planilha...</p>
+          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Conectando à nuvem do OneDrive e processando dados...</p>
         ) : (
           <div style={{ width: "100%", height: "400px" }}>
             <Bar
