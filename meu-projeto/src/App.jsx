@@ -21,7 +21,8 @@ export default function App() {
     try {
       // 🚀 A MUDANÇA SUPREMA: Trocamos o link curto "1drv.ms" pelo link longo oficial de download da Microsoft!
       // Esse domínio aceita os parâmetros de cache e interatividade sem dar erro 404 ou CORS no navegador!
-      const urlBaseOneDrive = "https://live.com";
+     const urlBaseOneDrive = "https://onedrive.live.com/download";
+
       
       const parametros = new URLSearchParams();
       parametros.append("resid", "30b5823953aebd4c"); // O ID único da sua planilha que estava no seu link
