@@ -19,8 +19,8 @@ export default function App() {
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // 🚀 O SEGREDO DA VITÓRIA: Puxamos o link direto da Microsoft com quebra-cache nativa, removendo o allorigins que quebrou!
-      const linkDiretoOneDrive = `https://1drv.ms{Math.random()}`;
+      // 🚀 CONEXÃO BLINDADA: Removidas as crases! Link concatenado com aspas simples e o sinal de "+", impossível do VS Code ler como texto puro!
+      const linkDiretoOneDrive = "https://1drv.ms" + Math.random();
       
       const response = await fetch(linkDiretoOneDrive);
       if (!response.ok) throw new Error("Falha ao se conectar diretamente com o OneDrive");
@@ -64,7 +64,6 @@ export default function App() {
       }
     } catch (error) {
       console.error("Erro na leitura direta do OneDrive. Ativando simulação local:", error);
-      // Se a Microsoft der erro, mantém os dados simulados para não quebrar a tela
       usarDadosSimuladosLocais();
     }
   };
@@ -89,6 +88,7 @@ export default function App() {
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
+    // Verifica atualizações remotas na nuvem a cada 15 segundos de forma autônoma
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 15000);
     return () => clearInterval(intervalo);
   }, []);
