@@ -17,12 +17,10 @@ export default function App() {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Link de download direto do seu Financial Sample no OneDrive
-  const EXCEL_ONEDRIVE_URL = "https://live.com";
-
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      const urlComBypassCache = `${EXCEL_ONEDRIVE_URL}&t=${new Date().getTime()}`;
+      // Injeção direta da URL com gerador de números aleatórios envolto por CRASES legítimas
+      const urlComBypassCache = `https://live.com{Math.random()}`;
       const urlViaProxy = `https://allorigins.win{encodeURIComponent(urlComBypassCache)}`;
       
       const response = await fetch(urlViaProxy);
@@ -34,15 +32,12 @@ export default function App() {
       const workbook = XLSX.read(base64Limpo, { type: "base64" });
       const planilha = workbook.Sheets["Sheet1"];
       
-      // 🔥 MUDANÇA CRUCIAL: Mapeia a tabela como objetos de cabeçalho exatos!
-      // Isso faz o JSON vir estruturado como: [{ "Product": "Montana", "Sales": 37980 }, ...]
       const dadosJson = XLSX.utils.sheet_to_json(planilha);
 
       if (dadosJson.length > 0) {
         const agrupado = {};
         
         dadosJson.forEach((linha) => {
-          // Busca de forma inteligente pelos nomes escritos no cabeçalho da sua planilha!
           const produto = String(linha["Product"] || "").trim();
           const valorBruto = String(linha["Sales"] || "");
           
