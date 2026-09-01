@@ -19,8 +19,8 @@ export default function App() {
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // Injeção direta da URL com gerador de números aleatórios envolto por CRASES legítimas
-      const urlComBypassCache = `https://live.com{Math.random()}`;
+      // 🔥 O SEGREDO DO MESTRE: Link de Incorporação direto do 1drv.ms com quebra de cache aleatória!
+      const urlComBypassCache = `https://1drv.ms{Math.random()}`;
       const urlViaProxy = `https://allorigins.win{encodeURIComponent(urlComBypassCache)}`;
       
       const response = await fetch(urlViaProxy);
@@ -38,6 +38,7 @@ export default function App() {
         const agrupado = {};
         
         dadosJson.forEach((linha) => {
+          // Mapeamento inteligente baseado no cabeçalho literal do seu Excel
           const produto = String(linha["Product"] || "").trim();
           const valorBruto = String(linha["Sales"] || "");
           
@@ -89,7 +90,8 @@ export default function App() {
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
-    const intervalo = setInterval(carregarDadosDoExcelRemoto, 20000);
+    // Verifica atualizações remotas a cada 15 segundos na nuvem
+    const intervalo = setInterval(carregarDadosDoExcelRemoto, 15000);
     return () => clearInterval(intervalo);
   }, []);
 
@@ -101,14 +103,14 @@ export default function App() {
         <div>
           <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "bold" }}>Dashboard Excel Web Real-Time</h1>
           <p style={{ margin: "5px 0 0 0", opacity: 0.7, fontSize: "14px" }}>
-            Sincronização corporativa inteligente por mapeamento de cabeçalhos.
+            Sincronização instantânea com link direto do OneDrive Microsoft.
           </p>
         </div>
       </div>
       
       <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
         {loading || !chartData ? (
-          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Conectando com segurança e descriptografando dados...</p>
+          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Atualizando dados do Excel em tempo real...</p>
         ) : (
           <div style={{ width: "100%", height: "400px" }}>
             <Bar
@@ -118,7 +120,7 @@ export default function App() {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: { display: false },
-                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Inteligente)", color: "#333", font: { size: 16, weight: "bold" } },
+                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Direta)", color: "#333", font: { size: 16, weight: "bold" } },
                 },
                 scales: {
                   x: { ticks: { color: "#333", font: { weight: "bold" } }, grid: { display: false } },
