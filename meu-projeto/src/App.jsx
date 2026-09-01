@@ -11,42 +11,47 @@ import {
   Legend,
 } from "chart.js";
 
+// Registra os componentes necessários do Chart.js para evitar quebras visuais
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function App() {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Link direto de download do OneDrive
+  // URL pública de extração de dados do seu Financial Sample no OneDrive
   const EXCEL_ONEDRIVE_URL = "https://live.com";
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // O parâmetro '&t=' quebra o cache do navegador e força a leitura do dado mais recente
+      // O parâmetro '&t=' adiciona a hora atual para forçar o navegador a buscar o arquivo novo, ignorando o cache
       const response = await fetch(`${EXCEL_ONEDRIVE_URL}&t=${new Date().getTime()}`);
+      
+      if (!response.ok) {
+        throw new Error("Não foi possível acessar o arquivo do OneDrive");
+      }
+
       const arrayBuffer = await response.arrayBuffer();
       
-      // Lê o arquivo binário do Excel diretamente no navegador do usuário
+      // Lê o arquivo binário do Excel diretamente no navegador (Front-end puro)
       const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
-      const planilha = workbook.Sheets["Sheet1"];
+      const planilha = workbook.Sheets["Sheet1"]; // Abre a aba Sheet1
       
-      // Converte as linhas em uma matriz pura
+      // Converte as linhas em uma matriz pura [[Linha 1], [Linha 2]]
       const dadosMatriz = XLSX.utils.sheet_to_json(planilha, { header: 1 });
 
       if (dadosMatriz.length > 1) {
         const agrupado = {};
         
-        // Mapeamento: índice 1 ou 2 para Produto, índice 4 ou 5 para Vendas (dependendo da sua planilha)
-        // O loop varre as linhas a partir do índice 1 (pulando o cabeçalho)
+        // No modelo Financial Sample: a coluna de índice 2 é 'Product' e a de índice 4 é 'Sales'
         for (let i = 1; i < dadosMatriz.length; i++) {
           const linha = dadosMatriz[i];
           if (!linha || linha.length === 0) continue;
 
-          // Ajuste automático caso suas colunas mudem de posição
-          const produto = String(linha[1] || linha[2] || "").trim();
-          const valorBruto = String(linha[4] || linha[5] || "");
+          // Mapeamento dinâmico baseado na ordem padrão das colunas do seu Excel
+          const produto = String(linha[2] || "").trim();
+          const valorBruto = String(linha[4] || "");
           
-          // Limpa caracteres especiais de moedas (como $) para permitir cálculos
+          // Limpa caracteres especiais de moedas (como $) para não quebrar a soma matemática
           const valorLimpo = valorBruto.replace(/[^\d.-]/g, ""); 
           const valorY = Number(valorLimpo) || 0;
 
@@ -55,6 +60,7 @@ export default function App() {
           }
         }
 
+        // Configura a estrutura de exibição oficial do Chart.js
         setChartData({
           labels: Object.keys(agrupado),
           datasets: [
@@ -70,14 +76,14 @@ export default function App() {
       }
       setLoading(false);
     } catch (error) {
-      console.error("Erro ao processar planilha no front-end:", error);
+      console.error("Erro ao ler dados do OneDrive diretamente no front-end:", error);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
-    // Verifica e puxa atualizações do OneDrive a cada 30 segundos automaticamente
+    // Polling Remoto: Verifica e puxa atualizações do OneDrive a cada 30 segundos automaticamente
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 30000);
     return () => clearInterval(intervalo);
   }, []);
@@ -85,6 +91,7 @@ export default function App() {
   return (
     <div style={{ padding: "40px", fontFamily: "sans-serif", backgroundColor: "#121214", color: "#fff", minHeight: "100vh" }}>
       
+      {/* Cabeçalho do Dashboard */}
       <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "30px" }}>
         <div style={{ fontSize: "40px", backgroundColor: "#202024", padding: "10px", borderRadius: "12px" }}>🏢</div>
         <div>
@@ -95,9 +102,10 @@ export default function App() {
         </div>
       </div>
       
+      {/* Container do Gráfico de Barras */}
       <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
         {loading || !chartData ? (
-          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Conectando à nuvem do OneDrive e processando dados...</p>
+          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Conectando com segurança ao OneDrive e processando a planilha...</p>
         ) : (
           <div style={{ width: "100%", height: "400px" }}>
             <Bar
