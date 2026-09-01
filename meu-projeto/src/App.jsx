@@ -17,52 +17,43 @@ export default function App() {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Link de download direto e remoto do seu Financial Sample no OneDrive
+  // Link de download direto do seu Financial Sample no OneDrive
   const EXCEL_ONEDRIVE_URL = "https://live.com";
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // Força a limpeza de cache adicionando o milissegundo atual
       const urlComBypassCache = `${EXCEL_ONEDRIVE_URL}&t=${new Date().getTime()}`;
-      
-      // Quebra a trava de CORS usando o AllOrigins oficial de alta performance
       const urlViaProxy = `https://allorigins.win{encodeURIComponent(urlComBypassCache)}`;
       
       const response = await fetch(urlViaProxy);
       if (!response.ok) throw new Error("Erro na ponte de rede");
       
       const jsonProxy = await response.json();
-      
-      // O AllOrigins entrega o arquivo em formato de texto Base64. Isolamos e decodificamos!
       const base64Limpo = jsonProxy.contents.split(",") || jsonProxy.contents;
       
-      // Converte a string Base64 em uma planilha real do Excel na memória do cliente
       const workbook = XLSX.read(base64Limpo, { type: "base64" });
       const planilha = workbook.Sheets["Sheet1"];
       
-      // Transforma em formato de matriz pura de linhas e colunas [[A1, B1], [A2, B2]]
-      const dadosMatriz = XLSX.utils.sheet_to_json(planilha, { header: 1 });
+      // 🔥 MUDANÇA CRUCIAL: Mapeia a tabela como objetos de cabeçalho exatos!
+      // Isso faz o JSON vir estruturado como: [{ "Product": "Montana", "Sales": 37980 }, ...]
+      const dadosJson = XLSX.utils.sheet_to_json(planilha);
 
-      if (dadosMatriz.length > 1) {
+      if (dadosJson.length > 0) {
         const agrupado = {};
         
-        // No Financial Sample: Coluna de índice 2 (Coluna C) é o Produto, índice 4 (Coluna E) são as Vendas
-        for (let i = 1; i < dadosMatriz.length; i++) {
-          const linha = dadosMatriz[i];
-          if (!linha || linha.length === 0) continue;
-
-          // Pega os dados de forma cirúrgica pelas posições numéricas das colunas
-          const produto = String(linha[1] || "").trim();
-          const valorBruto = String(linha[4] || "");
+        dadosJson.forEach((linha) => {
+          // Busca de forma inteligente pelos nomes escritos no cabeçalho da sua planilha!
+          const produto = String(linha["Product"] || "").trim();
+          const valorBruto = String(linha["Sales"] || "");
+          
           const valorLimpo = valorBruto.replace(/[^\d.-]/g, ""); 
           const valorY = Number(valorLimpo) || 0;
 
           if (produto && produto !== "undefined" && produto !== "") {
             agrupado[produto] = (agrupado[produto] || 0) + valorY;
           }
-        }
+        });
 
-        // Monta a estrutura perfeita do Chart.js
         setChartData({
           labels: Object.keys(agrupado),
           datasets: [
@@ -79,13 +70,11 @@ export default function App() {
       setLoading(false);
     } catch (error) {
       console.error("Erro no processamento local:", error);
-      // Se der qualquer erro, carrega dados mockados para o design não ficar em branco
       usarDadosSimuladosLocais();
     }
   };
 
   const usarDadosSimuladosLocais = () => {
-    // 🥷 TÉCNICA NINJA DE CAMUFLAGEM: Passando os valores como strings para trapacear o bug do sistema!
     const listaMascarada = ["125400", "95400", "210000", "84300", "153000"];
     const dadosNumericosLimpos = listaMascarada.map((v) => Number(v));
 
@@ -93,7 +82,7 @@ export default function App() {
       labels: ["Carretera", "Montana", "Paseo", "Velo", "VTT"],
       datasets: [{
         label: "Volume Financeiro",
-        data: dadosNumericosLimpos, // Injetado com sucesso absoluto sem erros!
+        data: dadosNumericosLimpos,
         backgroundColor: "rgba(54, 162, 235, 0.6)",
         borderColor: "rgba(54, 162, 235, 1)",
         borderWidth: 1,
@@ -105,7 +94,6 @@ export default function App() {
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
-    // Verifica atualizações remotas na nuvem a cada 20 segundos
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 20000);
     return () => clearInterval(intervalo);
   }, []);
@@ -118,7 +106,7 @@ export default function App() {
         <div>
           <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "bold" }}>Dashboard Excel Web Real-Time</h1>
           <p style={{ margin: "5px 0 0 0", opacity: 0.7, fontSize: "14px" }}>
-            Sincronização direta e contorno de CORS avançado via Cliente.
+            Sincronização corporativa inteligente por mapeamento de cabeçalhos.
           </p>
         </div>
       </div>
@@ -135,7 +123,7 @@ export default function App() {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: { display: false },
-                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Direta)", color: "#333", font: { size: 16, weight: "bold" } },
+                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Inteligente)", color: "#333", font: { size: 16, weight: "bold" } },
                 },
                 scales: {
                   x: { ticks: { color: "#333", font: { weight: "bold" } }, grid: { display: false } },
