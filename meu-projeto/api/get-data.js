@@ -1,26 +1,33 @@
-import { neon } from '@neondatabase/serverless';
+import * as XLSX from "xlsx";
 
 export default async function handler(req, res) {
-  // Configura os cabeçalhos de CORS para permitir que o React local (localhost:5173) acesse a API
+  // Configura os cabeçalhos de resposta para evitar travas locais no navegador
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Link de download direto do seu arquivo Financial Sample no OneDrive
+  const EXCEL_ONEDRIVE_URL = "https://live.com";
 
   try {
-    // A Vercel lerá a Connection String automaticamente das variáveis de ambiente em produção.
-    // Para testar localmente no desenvolvimento, você pode colocar sua string do Neon direto aqui se quiser,
-    // mas o padrão de mercado é usar variáveis de ambiente (process.env.DATABASE_URL).
-    const databaseUrl = process.env.DATABASE_URL || "SUA_CONNECTION_STRING_DO_NEON_AQUI";
+    // Faz o download do arquivo direto pelo servidor da Vercel (Burla o CORS de vez)
+    const response = await fetch(`${EXCEL_ONEDRIVE_URL}&t=${new Date().getTime()}`);
     
-    const sql = neon(databaseUrl);
+    if (!response.ok) throw new Error("Falha ao baixar arquivo do OneDrive");
     
-    // Executa a query SQL no banco Neon buscando os dados inseridos pelo script Python
-    const response = await sql`SELECT eixo_x, eixo_y FROM dashboard_data ORDER BY id ASC`;
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
     
-    // Retorna os dados para o gráfico em formato JSON com status 200 (Sucesso)
-    return res.status(200).json(response);
+    // Lê as informações binárias do Excel
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const planilha = workbook.Sheets["Sheet1"];
+    
+    // Converte para matriz pura [[Linha1], [Linha2]]
+    const dadosMatriz = XLSX.utils.sheet_to_json(planilha, { header: 1 });
+    
+    // Retorna a matriz para o React consumir de forma limpa
+    return res.status(200).json(dadosMatriz);
   } catch (error) {
-    console.error("Erro na API Serverless:", error);
+    console.error("Erro no processamento do Back-end:", error);
     return res.status(500).json({ error: error.message });
   }
 }
