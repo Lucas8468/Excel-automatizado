@@ -19,16 +19,13 @@ export default function App() {
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // 🚀 A MUDANÇA SUPREMA: Trocamos o link curto "1drv.ms" pelo link longo oficial de download da Microsoft!
-      // Esse domínio aceita os parâmetros de cache e interatividade sem dar erro 404 ou CORS no navegador!
-     const urlBaseOneDrive = "https://onedrive.live.com/download";
-
-      
+      // Usamos o construtor nativo de URL para isolar os parâmetros de quebra-cache
+      const urlBaseOneDrive = "https://live.com";
       const parametros = new URLSearchParams();
-      parametros.append("resid", "30b5823953aebd4c"); // O ID único da sua planilha que estava no seu link
+      parametros.append("resid", "30b5823953aebd4c");
       parametros.append("download", "1");
       parametros.append("wdAllowInteractivity", "True");
-      parametros.append("rand", String(Math.random())); // Gera o quebra-cache isolado perfeito!
+      parametros.append("rand", String(Math.random()));
 
       const linkDiretoOneDrive = urlBaseOneDrive + "?" + parametros.toString();
       
@@ -36,36 +33,52 @@ export default function App() {
       if (!response.ok) throw new Error("Falha ao se conectar diretamente com o OneDrive");
       
       const arrayBuffer = await response.arrayBuffer();
-      
-      // Lê o arquivo binário direto da memória do navegador do usuário
       const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
       const planilha = workbook.Sheets["Sheet1"];
-      
       const dadosJson = XLSX.utils.sheet_to_json(planilha);
 
       if (dadosJson.length > 0) {
-        const agrupado = {};
+        const faturamentoPorProduto = {};
+        const custoPorProduto = {};
         
         dadosJson.forEach((linha) => {
           const produto = String(linha["Product"] || "").trim();
-          const valorBruto = String(linha["Sales"] || "");
           
-          const valorLimpo = valorBruto.replace(/[^\d.-]/g, ""); 
-          const valorY = Number(valorLimpo) || 0;
+          // Captura os valores de Vendas (Sales) e Custo (COGS) baseados nos cabeçalhos reais
+          const vendaBruta = String(linha["Sales"] || "");
+          const custoBruto = String(linha["COGS"] || "");
+          
+          // Limpa caracteres especiais de moedas ($ ou R$)
+          const vendaLimpa = Number(vendaBruta.replace(/[^\d.-]/g, "")) || 0;
+          const custoLimpo = Number(custoBruto.replace(/[^\d.-]/g, "")) || 0;
 
           if (produto && produto !== "undefined" && produto !== "") {
-            agrupado[produto] = (agrupado[produto] || 0) + valorY;
+            faturamentoPorProduto[produto] = (faturamentoPorProduto[produto] || 0) + vendaLimpa;
+            custoPorProduto[produto] = (custoPorProduto[produto] || 0) + custoLimpo;
           }
         });
 
+        // 🧠 CÁLCULO DO ROI % CORPORATIVO
+        const produtos = Object.keys(faturamentoPorProduto);
+        const dadosROI = produtos.map((produto) => {
+          const faturamentoTotal = faturamentoPorProduto[produto];
+          const custoTotal = custoPorProduto[produto];
+          
+          if (custoTotal === 0) return 0;
+          
+          // Fórmula: ((Faturamento - Custo) / Custo) * 100
+          const roi = ((faturamentoTotal - custoTotal) / custoTotal) * 100;
+          return Number(roi.toFixed(2)); // Arredonda para 2 casas decimais
+        });
+
         setChartData({
-          labels: Object.keys(agrupado),
+          labels: produtos,
           datasets: [
             {
-              label: "Volume Financeiro",
-              data: Object.values(agrupado),
-              backgroundColor: "rgba(54, 162, 235, 0.6)",
-              borderColor: "rgba(54, 162, 235, 1)",
+              label: "Retorno sobre Investimento (ROI)",
+              data: dadosROI,
+              backgroundColor: "rgba(75, 192, 192, 0.6)", // Verde corporativo elegante para ROI
+              borderColor: "rgba(75, 192, 192, 1)",
               borderWidth: 1,
             },
           ],
@@ -73,22 +86,20 @@ export default function App() {
         setLoading(false);
       }
     } catch (error) {
-      console.error("Erro na leitura direta do OneDrive. Ativando simulação local:", error);
+      console.error("Erro no processamento do ROI remoto:", error);
       usarDadosSimuladosLocais();
     }
   };
 
   const usarDadosSimuladosLocais = () => {
-    const listaMascarada = ["125400", "95400", "210000", "84300", "153000"];
-    const dadosNumericosLimpos = listaMascarada.map((v) => Number(v));
-
+    // Dados mockados de ROI % simulados caso a conexão caia
     const dadosMock = {
       labels: ["Carretera", "Montana", "Paseo", "Velo", "VTT"],
       datasets: [{
-        label: "Volume Financeiro",
-        data: dadosNumericosLimpos,
-        backgroundColor: "rgba(54, 162, 235, 0.6)",
-        borderColor: "rgba(54, 162, 235, 1)",
+        label: "Retorno sobre Investimento (ROI)",
+        data: [15.4, 24.8, 12.1, 31.5, 18.9],
+        backgroundColor: "rgba(75, 192, 192, 0.6)",
+        borderColor: "rgba(75, 192, 192, 1)",
         borderWidth: 1,
       }]
     };
@@ -98,7 +109,6 @@ export default function App() {
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
-    // Verifica atualizações remotas na nuvem a cada 15 segundos de forma autônoma
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 15000);
     return () => clearInterval(intervalo);
   }, []);
@@ -106,19 +116,21 @@ export default function App() {
   return (
     <div style={{ padding: "40px", fontFamily: "sans-serif", backgroundColor: "#121214", color: "#fff", minHeight: "100vh" }}>
       
+      {/* Cabeçalho Avançado */}
       <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "30px" }}>
-        <div style={{ fontSize: "40px", backgroundColor: "#202024", padding: "10px", borderRadius: "12px" }}>🏢</div>
+        <div style={{ fontSize: "40px", backgroundColor: "#202024", padding: "10px", borderRadius: "12px" }}>📈</div>
         <div>
-          <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "bold" }}>Dashboard Excel Web Real-Time</h1>
+          <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "bold" }}>Dashboard Performance Executiva</h1>
           <p style={{ margin: "5px 0 0 0", opacity: 0.7, fontSize: "14px" }}>
-            Sincronização corporativa estável via Live.com oficial livre de erros.
+            Análise de ROI % em tempo real integrado à planilha remota do OneDrive.
           </p>
         </div>
       </div>
       
+      {/* Container do Gráfico */}
       <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
         {loading || !chartData ? (
-          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Sincronizando de forma segura com a Microsoft...</p>
+          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Calculando indicadores de ROI na nuvem...</p>
         ) : (
           <div style={{ width: "100%", height: "400px" }}>
             <Bar
@@ -128,11 +140,29 @@ export default function App() {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: { display: false },
-                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Real-Time)", color: "#333", font: { size: 16, weight: "bold" } },
+                  title: { 
+                    display: true, 
+                    text: "Rentabilidade Real (ROI %) por Linha de Produto", 
+                    color: "#333", 
+                    font: { size: 16, weight: "bold" } 
+                  },
+                  tooltip: {
+                    callbacks: {
+                      // 🛠️ Adiciona o símbolo de % no balão de informação ao passar o mouse
+                      label: (context) => ` ROI: ${context.parsed.y}%`
+                    }
+                  }
                 },
                 scales: {
                   x: { ticks: { color: "#333", font: { weight: "bold" } }, grid: { display: false } },
-                  y: { ticks: { color: "#333" }, grid: { color: "rgba(0, 0, 0, 0.05)" } },
+                  y: { 
+                    ticks: { 
+                      color: "#333",
+                      // 🛠️ Adiciona o símbolo de % no eixo vertical do gráfico
+                      callback: (value) => `${value}%`
+                    }, 
+                    grid: { color: "rgba(0, 0, 0, 0.05)" } 
+                  },
                 },
               }}
             />
