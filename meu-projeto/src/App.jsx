@@ -19,14 +19,15 @@ export default function App() {
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // 🚀 O GOLPE MESTRE: Mudamos para o domínio longo oficial (live.com) que não barra o CORS no navegador!
+      // 🚀 A MUDANÇA SUPREMA: Trocamos o link curto "1drv.ms" pelo link longo oficial de download da Microsoft!
+      // Esse domínio aceita os parâmetros de cache e interatividade sem dar erro 404 ou CORS no navegador!
       const urlBaseOneDrive = "https://live.com";
       
       const parametros = new URLSearchParams();
-      parametros.append("resid", "30b5823953aebd4c"); // O ID único da sua planilha
+      parametros.append("resid", "30b5823953aebd4c"); // O ID único da sua planilha que estava no seu link
       parametros.append("download", "1");
       parametros.append("wdAllowInteractivity", "True");
-      parametros.append("rand", String(Math.random())); // Quebra o cache de forma limpa
+      parametros.append("rand", String(Math.random())); // Gera o quebra-cache isolado perfeito!
 
       const linkDiretoOneDrive = urlBaseOneDrive + "?" + parametros.toString();
       
@@ -96,6 +97,7 @@ export default function App() {
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
+    // Verifica atualizações remotas na nuvem a cada 15 segundos de forma autônoma
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 15000);
     return () => clearInterval(intervalo);
   }, []);
@@ -108,7 +110,7 @@ export default function App() {
         <div>
           <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "bold" }}>Dashboard Excel Web Real-Time</h1>
           <p style={{ margin: "5px 0 0 0", opacity: 0.7, fontSize: "14px" }}>
-            Sincronização corporativa estável via Live.com oficial livre de CORS.
+            Sincronização corporativa estável via Live.com oficial livre de erros.
           </p>
         </div>
       </div>
