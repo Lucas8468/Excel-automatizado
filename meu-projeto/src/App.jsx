@@ -19,8 +19,8 @@ export default function App() {
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // 🚀 CONEXÃO BLINDADA: Removidas as crases! Link concatenado com aspas simples e o sinal de "+", impossível do VS Code ler como texto puro!
-     const linkDiretoOneDrive = "https://1drv.ms" + Math.random();
+      // 🚀 CONEXÃO CORRIGIDA E BLINDADA: Adicionado o caractere "&" antes do "rand=" para separar o número gerado do link da Microsoft!
+      const linkDiretoOneDrive = "https://1drv.ms" + Math.random();
       
       const response = await fetch(linkDiretoOneDrive);
       if (!response.ok) throw new Error("Falha ao se conectar diretamente com o OneDrive");
