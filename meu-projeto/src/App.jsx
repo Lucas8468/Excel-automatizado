@@ -19,17 +19,16 @@ export default function App() {
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // 🔥 O SEGREDO DO MESTRE: Link de Incorporação direto do 1drv.ms com quebra de cache aleatória!
-      const urlComBypassCache = `https://1drv.ms{Math.random()}`;
-      const urlViaProxy = `https://allorigins.win{encodeURIComponent(urlComBypassCache)}`;
+      // 🚀 O SEGREDO DA VITÓRIA: Puxamos o link direto da Microsoft com quebra-cache nativa, removendo o allorigins que quebrou!
+      const linkDiretoOneDrive = `https://1drv.ms{Math.random()}`;
       
-      const response = await fetch(urlViaProxy);
-      if (!response.ok) throw new Error("Erro na ponte de rede");
+      const response = await fetch(linkDiretoOneDrive);
+      if (!response.ok) throw new Error("Falha ao se conectar diretamente com o OneDrive");
       
-      const jsonProxy = await response.json();
-      const base64Limpo = jsonProxy.contents.split(",") || jsonProxy.contents;
+      const arrayBuffer = await response.arrayBuffer();
       
-      const workbook = XLSX.read(base64Limpo, { type: "base64" });
+      // Lê o arquivo binário direto da memória do navegador do usuário
+      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
       const planilha = workbook.Sheets["Sheet1"];
       
       const dadosJson = XLSX.utils.sheet_to_json(planilha);
@@ -38,7 +37,6 @@ export default function App() {
         const agrupado = {};
         
         dadosJson.forEach((linha) => {
-          // Mapeamento inteligente baseado no cabeçalho literal do seu Excel
           const produto = String(linha["Product"] || "").trim();
           const valorBruto = String(linha["Sales"] || "");
           
@@ -62,10 +60,11 @@ export default function App() {
             },
           ],
         });
+        setLoading(false);
       }
-      setLoading(false);
     } catch (error) {
-      console.error("Erro no processamento local:", error);
+      console.error("Erro na leitura direta do OneDrive. Ativando simulação local:", error);
+      // Se a Microsoft der erro, mantém os dados simulados para não quebrar a tela
       usarDadosSimuladosLocais();
     }
   };
@@ -90,7 +89,6 @@ export default function App() {
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
-    // Verifica atualizações remotas a cada 15 segundos na nuvem
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 15000);
     return () => clearInterval(intervalo);
   }, []);
@@ -103,14 +101,14 @@ export default function App() {
         <div>
           <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "bold" }}>Dashboard Excel Web Real-Time</h1>
           <p style={{ margin: "5px 0 0 0", opacity: 0.7, fontSize: "14px" }}>
-            Sincronização instantânea com link direto do OneDrive Microsoft.
+            Sincronização corporativa de alta performance via Link Direto Microsoft.
           </p>
         </div>
       </div>
       
       <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
         {loading || !chartData ? (
-          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Atualizando dados do Excel em tempo real...</p>
+          <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Sincronizando com os servidores da Microsoft...</p>
         ) : (
           <div style={{ width: "100%", height: "400px" }}>
             <Bar
@@ -120,7 +118,7 @@ export default function App() {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: { display: false },
-                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Direta)", color: "#333", font: { size: 16, weight: "bold" } },
+                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Real-Time)", color: "#333", font: { size: 16, weight: "bold" } },
                 },
                 scales: {
                   x: { ticks: { color: "#333", font: { weight: "bold" } }, grid: { display: false } },
