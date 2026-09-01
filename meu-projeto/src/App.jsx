@@ -11,41 +11,42 @@ import {
   Legend,
 } from "chart.js";
 
-// Registra os componentes necessários do Chart.js
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function App() {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // URL direta de extração de dados do seu Financial Sample no OneDrive
+  // Link direto de download do OneDrive
   const EXCEL_ONEDRIVE_URL = "https://live.com";
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // O parâmetro '&t=' força o navegador a buscar o arquivo novo, ignorando o cache da Microsoft
+      // O parâmetro '&t=' quebra o cache do navegador e força a leitura do dado mais recente
       const response = await fetch(`${EXCEL_ONEDRIVE_URL}&t=${new Date().getTime()}`);
       const arrayBuffer = await response.arrayBuffer();
       
-      // Lê o arquivo do Excel diretamente no navegador do usuário
+      // Lê o arquivo binário do Excel diretamente no navegador do usuário
       const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
-      const planilha = workbook.Sheets["Sheet1"]; // Abre a aba Sheet1
+      const planilha = workbook.Sheets["Sheet1"];
       
-      // Converte as linhas em uma matriz pura [[Linha 1], [Linha 2]]
+      // Converte as linhas em uma matriz pura
       const dadosMatriz = XLSX.utils.sheet_to_json(planilha, { header: 1 });
 
       if (dadosMatriz.length > 1) {
         const agrupado = {};
         
-        // Mapeia as colunas do Financial Sample (Índice 2 = Produto, Índice 4 = Vendas)
+        // Mapeamento: índice 1 ou 2 para Produto, índice 4 ou 5 para Vendas (dependendo da sua planilha)
+        // O loop varre as linhas a partir do índice 1 (pulando o cabeçalho)
         for (let i = 1; i < dadosMatriz.length; i++) {
           const linha = dadosMatriz[i];
           if (!linha || linha.length === 0) continue;
 
-          const produto = String(linha[2] || "").trim();
-          const valorBruto = String(linha[4] || "");
+          // Ajuste automático caso suas colunas mudem de posição
+          const produto = String(linha[1] || linha[2] || "").trim();
+          const valorBruto = String(linha[4] || linha[5] || "");
           
-          // Limpa caracteres especiais de moedas (como $) para não quebrar a soma matemática
+          // Limpa caracteres especiais de moedas (como $) para permitir cálculos
           const valorLimpo = valorBruto.replace(/[^\d.-]/g, ""); 
           const valorY = Number(valorLimpo) || 0;
 
@@ -54,7 +55,6 @@ export default function App() {
           }
         }
 
-        // Atualiza a estrutura oficial de dados do Chart.js
         setChartData({
           labels: Object.keys(agrupado),
           datasets: [
@@ -77,7 +77,7 @@ export default function App() {
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
-    // Polling Remoto: Verifica e puxa atualizações do OneDrive a cada 30 segundos automaticamente
+    // Verifica e puxa atualizações do OneDrive a cada 30 segundos automaticamente
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 30000);
     return () => clearInterval(intervalo);
   }, []);
@@ -85,7 +85,6 @@ export default function App() {
   return (
     <div style={{ padding: "40px", fontFamily: "sans-serif", backgroundColor: "#121214", color: "#fff", minHeight: "100vh" }}>
       
-      {/* Cabeçalho do Dashboard */}
       <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "30px" }}>
         <div style={{ fontSize: "40px", backgroundColor: "#202024", padding: "10px", borderRadius: "12px" }}>🏢</div>
         <div>
@@ -96,7 +95,6 @@ export default function App() {
         </div>
       </div>
       
-      {/* Container do Gráfico de Barras */}
       <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
         {loading || !chartData ? (
           <p style={{ color: "#333", textAlign: "center", fontWeight: "bold" }}>Conectando à nuvem do OneDrive e processando dados...</p>
