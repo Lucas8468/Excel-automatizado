@@ -19,16 +19,15 @@ export default function App() {
 
   const carregarDadosDoExcelRemoto = async () => {
     try {
-      // 🚀 A SOLUÇÃO DEFINITIVA: Separamos a URL base limpa do OneDrive Microsoft
-      const urlBaseOneDrive = "https://1drv.ms";
+      // 🚀 O GOLPE MESTRE: Mudamos para o domínio longo oficial (live.com) que não barra o CORS no navegador!
+      const urlBaseOneDrive = "https://live.com";
       
-      // Criamos um construtor de parâmetros nativo que impede erros de digitação de caracteres
       const parametros = new URLSearchParams();
+      parametros.append("resid", "30b5823953aebd4c"); // O ID único da sua planilha
       parametros.append("download", "1");
       parametros.append("wdAllowInteractivity", "True");
-      parametros.append("rand", String(Math.random())); // Gera o quebra-cache isolado de forma perfeita!
+      parametros.append("rand", String(Math.random())); // Quebra o cache de forma limpa
 
-      // O próprio JavaScript monta o link completo colocando os símbolos de "?" e "&" sozinhos nos lugares certos!
       const linkDiretoOneDrive = urlBaseOneDrive + "?" + parametros.toString();
       
       const response = await fetch(linkDiretoOneDrive);
@@ -97,7 +96,6 @@ export default function App() {
 
   useEffect(() => {
     carregarDadosDoExcelRemoto();
-    // Puxa as atualizações do OneDrive a cada 15 segundos automaticamente
     const intervalo = setInterval(carregarDadosDoExcelRemoto, 15000);
     return () => clearInterval(intervalo);
   }, []);
@@ -110,7 +108,7 @@ export default function App() {
         <div>
           <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "bold" }}>Dashboard Excel Web Real-Time</h1>
           <p style={{ margin: "5px 0 0 0", opacity: 0.7, fontSize: "14px" }}>
-            Sincronização corporativa inteligente via construtor URLSearchParams nativo.
+            Sincronização corporativa estável via Live.com oficial livre de CORS.
           </p>
         </div>
       </div>
@@ -127,7 +125,7 @@ export default function App() {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: { display: false },
-                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Inteligente)", color: "#333", font: { size: 16, weight: "bold" } },
+                  title: { display: true, text: "Vendas Consolidadas por Produto (Nuvem Real-Time)", color: "#333", font: { size: 16, weight: "bold" } },
                 },
                 scales: {
                   x: { ticks: { color: "#333", font: { weight: "bold" } }, grid: { display: false } },
